@@ -1,0 +1,4 @@
+en:
+  faker:
+    nasa: 
+      quotes: [ "Failure is not an option." ]

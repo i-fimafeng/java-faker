@@ -12,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -54,6 +55,8 @@ public class FakeValuesService {
         this.randomService = randomService;
         locale = normalizeLocale(locale);
 
+        List<ResourceProvider> providers = loadProvider();
+
         final List<Locale> locales = localeChain(locale);
         final List<Map<String,Object>> all = new ArrayList(locales.size());
         for (final Locale l : locales) {
@@ -61,10 +64,13 @@ public class FakeValuesService {
             if (!"".equals(l.getCountry())) {
                 filename.append("-").append(l.getCountry());
             }
-        
-            final InputStream stream = findStream(filename.toString());
-            if (stream != null) {
-                all.add(fakerFromStream(stream, filename.toString()));
+
+            final List<InputStream> streams = new ArrayList<InputStream>();
+            for (ResourceProvider provider : providers) {
+                streams.addAll(provider.getResources(filename.toString()));
+            }
+            if (!streams.isEmpty()) {
+                all.add(fakerFromStreams(streams, filename.toString()));
             }
         }
 
@@ -93,12 +99,55 @@ public class FakeValuesService {
     }
 
     /**
+     * Merge the maps loaded from different location.
+     */
+    @SuppressWarnings("unchecked")
+    protected void fakerMergeMaps(Map destination, Map toMerge) {
+        final Queue<Map<String, Object>> qDest = new LinkedList<Map<String, Object>>();
+        final Queue<Map<String, Object>> qMerge = new LinkedList<Map<String, Object>>();
+        qDest.add(destination);
+        qMerge.add(toMerge);
+        while (!qMerge.isEmpty() && !qDest.isEmpty()) {
+            Map<String, Object> dest = qDest.poll();
+            Map<String, Object> merge = qMerge.poll();
+
+            for (Map.Entry<String, Object> entry : merge.entrySet()) {
+
+                if (!dest.containsKey(entry.getKey())) {
+                    dest.put(entry.getKey(), entry.getValue());
+                } else {
+                    if (entry.getValue() instanceof Map) {
+                        qDest.add((Map<String, Object>) dest.get(entry.getKey()));
+                        qMerge.add((Map<String, Object>) entry.getValue());
+                    } else if (entry.getValue() instanceof List) {
+                        if (dest.get(entry.getKey()) instanceof List) {
+                            List list = (List) dest.get(entry.getKey());
+                            list.addAll((List) entry.getValue());
+                        } else {
+                            System.out.println(
+                                    "could not merge List to " + dest.get(entry.getKey()).getClass().getSimpleName()
+                                            + " <" + entry.getKey() + ">");
+                        }
+                    } else {
+                        System.out.println(
+                                entry.getValue().getClass().getSimpleName() + " : " + entry.getValue().toString());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * @return the embedded faker: clause from the loaded Yml by the localeName, so .yml > en-us: > faker: 
      */
-    protected Map fakerFromStream(InputStream stream, String localeName) {
-        final Map valuesMap = new Yaml().loadAs(stream, Map.class);
-        final Map localeBased = (Map) valuesMap.get(localeName);
-        return (Map) localeBased.get("faker");
+    @SuppressWarnings("unchecked")
+    protected Map<String, Object> fakerFromStreams(List<InputStream> streams, String localeName) {
+        final Map localeBased = new HashMap();
+        for (InputStream stream : streams) {
+            final Map valuesMap = new Yaml().loadAs(stream, Map.class);
+            fakerMergeMaps(localeBased, (Map) valuesMap.get(localeName));
+        }
+        return (Map<String, Object>) localeBased.get("faker");
     }
 
     /**
@@ -139,13 +188,13 @@ public class FakeValuesService {
         }
     }
 
-    private InputStream findStream(String filename) {
-        String filenameWithExtension =  "/" + filename + ".yml";
-        InputStream streamOnClass = getClass().getResourceAsStream(filenameWithExtension);
-        if (streamOnClass != null) {
-            return streamOnClass;
+    private List<ResourceProvider> loadProvider() {
+        List<ResourceProvider> providers = new ArrayList<ResourceProvider>();
+        providers.add(new DefaultResourceProvider());
+        for (ResourceProvider provider : ServiceLoader.load(ResourceProvider.class)) {
+            providers.add(provider);
         }
-        return getClass().getClassLoader().getResourceAsStream(filenameWithExtension);
+        return providers;
     }
 
     /**

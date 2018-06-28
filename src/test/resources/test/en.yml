@@ -1,0 +1,6 @@
+en:
+  faker:
+    testing:
+      quotes: [ "Quality is not an act, it is a habit." ]
+    nasa: 
+      quotes: [ "Test what you fly, fly what you test." ]
