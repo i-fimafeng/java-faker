@@ -190,7 +190,7 @@ public class FakeValuesService {
 
     private List<ResourceProvider> loadProvider() {
         List<ResourceProvider> providers = new ArrayList<ResourceProvider>();
-        providers.add(new DefaultResourceProvider());
+        providers.add(new ResourceProvider.Default());
         for (ResourceProvider provider : ServiceLoader.load(ResourceProvider.class)) {
             providers.add(provider);
         }

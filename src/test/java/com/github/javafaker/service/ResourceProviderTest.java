@@ -6,9 +6,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 import org.junit.Before;
@@ -20,33 +17,20 @@ import com.github.javafaker.AbstractFakerTest;
 
 public class ResourceProviderTest extends AbstractFakerTest {
 
-    public static class DummyProvider implements ResourceProvider {
+    public static class DummyProvider extends ResourceProvider.Base {
 
-        @Override
-        public List<InputStream> getResources(String filename) {
-            List<InputStream> list = new ArrayList<InputStream>();
-            InputStream in = getClass().getClassLoader().getResourceAsStream("test/" + filename + ".yml");
-            if (in != null) {
-                list.add(in);
-            }
-            return list;
+        public DummyProvider() {
+            super("test");
         }
-
     }
     
-    public static class DummyProvider2 implements ResourceProvider {
+    public static class DummyProvider2 extends ResourceProvider.Base {
 
-        @Override
-        public List<InputStream> getResources(String filename) {
-            List<InputStream> list = new ArrayList<InputStream>();
-            InputStream in = getClass().getClassLoader().getResourceAsStream("test2/" + filename + ".yml");
-            if (in != null) {
-                list.add(in);
-            }
-            return list;
+        public DummyProvider2() {
+            super("test2");
         }
-        
     }
+    
 
     @Mock
     private RandomService randomService;
