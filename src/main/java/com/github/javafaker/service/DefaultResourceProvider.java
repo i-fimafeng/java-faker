@@ -10,12 +10,12 @@ public class DefaultResourceProvider implements ResourceProvider {
 	public List<InputStream> getResources(String filename) {
 		List<InputStream> list = new ArrayList<InputStream>();
 		String filenameWithExtension = "/" + filename + ".yml";
-		InputStream streamOnClass = getClass().getResourceAsStream(filenameWithExtension);
+		InputStream streamOnClass = DefaultResourceProvider.class.getResourceAsStream(filenameWithExtension);
 		if (streamOnClass != null) {
 			list.add(streamOnClass);
 			return list;
 		} 
-		streamOnClass = getClass().getClassLoader().getResourceAsStream(filenameWithExtension);
+		streamOnClass = DefaultResourceProvider.class.getClassLoader().getResourceAsStream(filenameWithExtension);
 		if (streamOnClass != null) {
 			list.add(streamOnClass);
 		} 		

@@ -176,6 +176,60 @@ Supported Locales
 * zh-CN
 * zh-TW
 
+Create an extension
+-------------------
+It is possible to add content to Faker by creating a `ResourceProvider` which will provide additional
+YAML content that will be merged with the normal Faker content.
+
+### Implicitly with a SPI provider
+
+In this case, you need to add a jar file in the class path specifying the provider implementation 
+in `META-INF/services/com.github.javafaker.service.ResourceProvider` and Faker will detect
+it automatically.
+
+See [DummyProvider.java](src/test/java/com/github/javafaker/service/DummyProvider.java)
+
+### Extends `Faker` class
+
+In conjunction, it is possible to extends the `Faker` class to add new component using faker
+`resolve` method.
+
+Example to use https://placekitten.com/ 
+
+```java
+    public static class ExtendFaker extends Faker {
+
+        public ExtendFaker() {
+            super();
+        }
+
+        public ExtendFaker(Locale locale) {
+            super(locale);
+        }
+
+        public ExtendFaker(Random random) {
+            super(random);
+        }
+
+        public ExtendFaker(Locale locale, Random random) {
+            super(locale, random);
+        }
+
+        public String kitten(Integer width, Integer height, Boolean gray) {
+            return String.format("https://placekitten.com/%s%s/%s", gray ? "g/" : StringUtils.EMPTY, width, height);
+        }
+
+        public String kitten() {
+            String[] dimension = StringUtils
+                    .split(this.fakeValuesService().resolve("internet.image_dimension", this, this), 'x');
+            if (dimension.length == 0)
+                return "";
+            return kitten(Integer.valueOf(StringUtils.trim(dimension[0])),
+                    Integer.valueOf(StringUtils.trim(dimension[1])), bool().bool());
+        }
+    }
+```
+
 TODO
 ----
 - Port more classes over as there are more entries in the yml file that we don't have classes for

@@ -1,2 +1,2 @@
-com.github.javafaker.service.DummyProvider
-com.github.javafaker.service.DummyProvider2
+com.github.javafaker.service.ResourceProviderTest$DummyProvider
+com.github.javafaker.service.ResourceProviderTest$DummyProvider2

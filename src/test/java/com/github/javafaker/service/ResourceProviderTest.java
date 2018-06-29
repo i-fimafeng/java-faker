@@ -6,6 +6,9 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import org.junit.Before;
@@ -16,6 +19,34 @@ import org.mockito.MockitoAnnotations;
 import com.github.javafaker.AbstractFakerTest;
 
 public class ResourceProviderTest extends AbstractFakerTest {
+
+    public static class DummyProvider implements ResourceProvider {
+
+        @Override
+        public List<InputStream> getResources(String filename) {
+            List<InputStream> list = new ArrayList<InputStream>();
+            InputStream in = getClass().getClassLoader().getResourceAsStream("test/" + filename + ".yml");
+            if (in != null) {
+                list.add(in);
+            }
+            return list;
+        }
+
+    }
+    
+    public static class DummyProvider2 implements ResourceProvider {
+
+        @Override
+        public List<InputStream> getResources(String filename) {
+            List<InputStream> list = new ArrayList<InputStream>();
+            InputStream in = getClass().getClassLoader().getResourceAsStream("test2/" + filename + ".yml");
+            if (in != null) {
+                list.add(in);
+            }
+            return list;
+        }
+        
+    }
 
     @Mock
     private RandomService randomService;
@@ -45,4 +76,11 @@ public class ResourceProviderTest extends AbstractFakerTest {
         assertThat(fakeValuesService.fetchString("nasa.quotes"), is("Test what you fly, fly what you test."));
         assertThat(fakeValuesService.fetchString("nasa.quotes"), is("Failure is not an option."));
     }
+
+    @Test
+    public void loadNormalContent() {
+
+        assertThat(fakeValuesService.fetchString("job.key_skills"), is("Teamwork"));
+    }
+
 }
